@@ -6,17 +6,17 @@ function processFile(inputId, category) {
         const reader = new FileReader();
         
         reader.onload = function(e) {
-            const content = e.target.result.split('\n').slice(1); // Ignore first line
+            const content = e.target.result.split('\n').slice(1); // Ignore the first line
             
             const processedData = content.map(line => {
-                // Extract name and set
-                const match = line.match(/^(\d+)\s([A-Za-z\s\-]+)\s?\-?\s?(\d{3,})?\s?\[(.*?)\]/);
+                // Regex to match: Ignore the quantity, get the name, set, and number if present
+                const match = line.match(/^\d+\s?([A-Za-z\s\-]+)(\s?\-?\s?\d{1,3}(\/\d{1,3})?)?\s?\[(.*?)\]/);
                 if (match) {
-                    const name = match[2].trim();
-                    const set = match[4].trim();
-                    const number = match[3] ? match[3] : null;
+                    const name = match[1].trim();  // Extract the Pokémon name
+                    const set = match[4].trim();   // Extract the set name inside the []
+                    const number = match[2] ? match[2].trim() : null;  // Extract the number if present
 
-                    // Adjust set name using external database (will handle later)
+                    // Adjust the set name using external database (implement later)
                     const adjustedSet = adjustSetName(set);
 
                     return { name, set: adjustedSet, number, category };
@@ -24,7 +24,7 @@ function processFile(inputId, category) {
                 return null;
             }).filter(data => data !== null);
 
-            // Display the processed data (you can modify this display function later)
+            // Display the processed data
             displayProcessedData(processedData);
         };
 
@@ -32,7 +32,7 @@ function processFile(inputId, category) {
     }
 }
 
-// Adjust the set name using the external database (implement later)
+// Adjust the set name using an external database (implement later)
 function adjustSetName(set) {
     // Placeholder function to process set names, replace with actual database call
     return set;  // Temporarily returns the same set name
@@ -44,11 +44,21 @@ function displayProcessedData(data) {
 
     data.forEach(item => {
         const cardDiv = document.createElement('div');
-        cardDiv.textContent = `${item.name} - ${item.set}${item.number ? ` - ${item.number}` : ''}`;
-        if (item.category === 'Holo') {
-            cardDiv.style.fontWeight = 'bold'; // Mark Holos with bold text
-            cardDiv.style.color = 'gold';      // Could use a shiny color or symbol for Holos
+        let displayText = `${item.name} - ${item.set}`;
+        
+        // Append the number after the set if it exists
+        if (item.number) {
+            displayText += ` ${item.number}`;
         }
+
+        cardDiv.textContent = displayText;
+
+        // Mark Holos with bold and gold color (could use other styling)
+        if (item.category === 'Holo') {
+            cardDiv.style.fontWeight = 'bold'; 
+            cardDiv.style.color = 'gold'; 
+        }
+
         outputDiv.appendChild(cardDiv);
     });
 }
