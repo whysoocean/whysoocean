@@ -1,77 +1,55 @@
-function processFile(inputId, category) {
-    const fileInput = document.getElementById(inputId);
-    const files = fileInput.files;
+function processCardData(cardLines) {
+  const processedCards = [];
 
-    if (files.length > 0) {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            const content = e.target.result.split('\n').slice(1); // Ignore the first line
-            
-            const processedData = content.map(line => {
-                // Regex to match: Ignore the quantity, get the name, set, and number if present
-                const match = line.match(/^(\d+)\s([A-Za-z\s\-]+)\s?\[([^\]]+)\](?:\s?(\d+\/\d+|\d+))?/);
-                if (match) {
-                    const name = match[2].trim();  // Extract the Pokémon name
-                    const set = match[3].trim();   // Extract the set name inside the []
-                    const number = match[4] ? match[4].trim() : null;  // Extract the number if present
+  cardLines.forEach(line => {
+    // Step 1: Trim and split the line
+    const parts = line.trim().split(' ');
 
-                    // Adjust the set name using external database (implement later)
-                    const adjustedSet = adjustSetName(set);
+    // Step 2: Ignore the first number (quantity) and join the rest
+    const nameAndSetText = parts.slice(1).join(' ');  // Join everything after the quantity
 
-                    return { name, set: adjustedSet, number, category };
-                }
-                return null;
-            }).filter(data => data !== null);
+    // Step 3: Extract the set (inside square brackets [])
+    const setMatch = nameAndSetText.match(/\[([A-Za-z0-9\-]+)\]/);
+    if (!setMatch) return;  // Skip if no set is found
+    const set = setMatch[1];
 
-            // Display the processed data
-            displayProcessedData(processedData);
-        };
+    // Step 4: Remove the set from the name and clean up the remaining text
+    let name = nameAndSetText.replace(setMatch[0], '').trim();
 
-        reader.readAsText(files[0]);
+    // Step 5: Check if there is a number after the name (e.g., "182/197")
+    const numberMatch = name.match(/(\d+\/\d+|\d+)/);  // Match a number or a range like 182/197
+    const number = numberMatch ? numberMatch[0] : '';  // Extract the number if present
+
+    // Step 6: Remove the number from the name if present
+    if (number) {
+      name = name.replace(number, '').trim();  // Remove the number from the name string
     }
+
+    // Step 7: Add the processed data
+    processedCards.push({ name, set, number });
+  });
+
+  return processedCards;
 }
 
-// Adjust the set name using an external database (implement later)
-function adjustSetName(set) {
-    // Placeholder function to process set names, replace with actual database call
-    return set;  // Temporarily returns the same set name
-}
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-function displayProcessedData(data) {
-    const outputDiv = document.getElementById('output');
-    outputDiv.innerHTML = '';  // Clear previous output
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCJfVxYXdvCUEOFevfGz8BzT_MVTklatVU",
+  authDomain: "whysoocean-71c75.firebaseapp.com",
+  projectId: "whysoocean-71c75",
+  storageBucket: "whysoocean-71c75.firebasestorage.app",
+  messagingSenderId: "977702944697",
+  appId: "1:977702944697:web:9b7fe9e25af31cc1a20068",
+  measurementId: "G-F079RRJV2D"
+};
 
-    data.forEach(item => {
-        const cardDiv = document.createElement('div');
-        let displayText = `${item.name} - ${item.set}`;
-        
-        // Append the number after the set if it exists
-        if (item.number) {
-            displayText += ` ${item.number}`;
-        }
-
-        cardDiv.textContent = displayText;
-
-        // Mark Holos with bold and gold color (could use other styling)
-        if (item.category === 'Holo') {
-            cardDiv.style.fontWeight = 'bold'; 
-            cardDiv.style.color = 'gold'; 
-        }
-
-        outputDiv.appendChild(cardDiv);
-    });
-}
-
-// Functions for each category
-function processCommonFiles() {
-    processFile('commonFileInput', 'Common');
-}
-
-function processTrainerFiles() {
-    processFile('trainerFileInput', 'Trainer');
-}
-
-function processHoloFiles() {
-    processFile('holoFileInput', 'Holo');
-}
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
