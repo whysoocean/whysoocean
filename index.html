@@ -3,11 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhySoOcean</title>
+    <title>Pokemon Collection Tracker</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Welcome to WhySoOcean</h1>
-    <p>This is your website hosted on GitHub Pages!</p>
+    <h1>Pokemon Collection Tracker</h1>
+
+    <!-- File upload sections -->
+    <div>
+        <h2>Upload Common Cards</h2>
+        <input type="file" id="commonFileInput" accept=".txt" multiple>
+        <button onclick="processCommonFiles()">Process Common Files</button>
+    </div>
+
+    <div>
+        <h2>Upload Trainer Cards</h2>
+        <input type="file" id="trainerFileInput" accept=".txt" multiple>
+        <button onclick="processTrainerFiles()">Process Trainer Files</button>
+    </div>
+
+    <div>
+        <h2>Upload Holo Cards</h2>
+        <input type="file" id="holoFileInput" accept=".txt" multiple>
+        <button onclick="processHoloFiles()">Process Holo Files</button>
+    </div>
+
+    <!-- Display section for the processed data -->
+    <div id="output"></div>
+
+    <script src="script.js"></script>
 </body>
 </html>
 
