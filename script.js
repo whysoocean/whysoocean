@@ -10,11 +10,11 @@ function processFile(inputId, category) {
             
             const processedData = content.map(line => {
                 // Regex to match: Ignore the quantity, get the name, set, and number if present
-                const match = line.match(/^\d+\s?([A-Za-z\s\-]+)(\s?\-?\s?\d{1,3}(\/\d{1,3})?)?\s?\[(.*?)\]/);
+                const match = line.match(/^(\d+)\s([A-Za-z\s\-]+)\s?\[([^\]]+)\](?:\s?(\d+\/\d+|\d+))?/);
                 if (match) {
-                    const name = match[1].trim();  // Extract the Pokémon name
-                    const set = match[4].trim();   // Extract the set name inside the []
-                    const number = match[2] ? match[2].trim() : null;  // Extract the number if present
+                    const name = match[2].trim();  // Extract the Pokémon name
+                    const set = match[3].trim();   // Extract the set name inside the []
+                    const number = match[4] ? match[4].trim() : null;  // Extract the number if present
 
                     // Adjust the set name using external database (implement later)
                     const adjustedSet = adjustSetName(set);
