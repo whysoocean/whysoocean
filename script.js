@@ -6,6 +6,7 @@ document.getElementById('file-input').addEventListener('change', function (event
 
     reader.onload = function (e) {
       const fileContent = e.target.result;
+      console.log("File content:", fileContent);  // Debugging line
       displayPokemon(fileContent);
     };
 
