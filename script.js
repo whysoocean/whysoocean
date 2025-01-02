@@ -1,45 +1,4 @@
-function processCardData(cardLines) {
-  const processedCards = [];
-
-  cardLines.forEach(line => {
-    // Step 1: Trim and split the line
-    const parts = line.trim().split(' ');
-
-    // Step 2: Ignore the first number (quantity) and join the rest
-    const nameAndSetText = parts.slice(1).join(' ');  // Join everything after the quantity
-
-    // Step 3: Extract the set (inside square brackets [])
-    const setMatch = nameAndSetText.match(/\[([A-Za-z0-9\-]+)\]/);
-    if (!setMatch) return;  // Skip if no set is found
-    const set = setMatch[1];
-
-    // Step 4: Remove the set from the name and clean up the remaining text
-    let name = nameAndSetText.replace(setMatch[0], '').trim();
-
-    // Step 5: Check if there is a number after the name (e.g., "182/197")
-    const numberMatch = name.match(/(\d+\/\d+|\d+)/);  // Match a number or a range like 182/197
-    const number = numberMatch ? numberMatch[0] : '';  // Extract the number if present
-
-    // Step 6: Remove the number from the name if present
-    if (number) {
-      name = name.replace(number, '').trim();  // Remove the number from the name string
-    }
-
-    // Step 7: Add the processed data
-    processedCards.push({ name, set, number });
-  });
-
-  return processedCards;
-}
-
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase Configuration and Initialization
 const firebaseConfig = {
   apiKey: "AIzaSyCJfVxYXdvCUEOFevfGz8BzT_MVTklatVU",
   authDomain: "whysoocean-71c75.firebaseapp.com",
@@ -47,9 +6,75 @@ const firebaseConfig = {
   storageBucket: "whysoocean-71c75.firebasestorage.app",
   messagingSenderId: "977702944697",
   appId: "1:977702944697:web:9b7fe9e25af31cc1a20068",
-  measurementId: "G-F079RRJV2D"
+  measurementId: "G-F079RRJV2D",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Function to parse and process the uploaded file
+async function processFile(file) {
+  const text = await file.text();
+  const lines = text.split("\\n");
+  lines.shift(); // Remove the first line
+
+  const data = {};
+  lines.forEach((line) => {
+    const match = line.match(/\\d+\\s+(.*)\\s+\\[([^\\]]+)\\]/);
+    if (match) {
+      const [_, name, set] = match;
+      const numberMatch = name.match(/(-?\\d+\\/\\d+|-?\\d+)$/);
+      const number = numberMatch ? numberMatch[0] : null;
+      const cleanName = number ? name.replace(number, "").trim() : name.trim();
+
+      if (!data[set]) data[set] = [];
+      if (!data[set].some((entry) => entry.name === cleanName && entry.number === number)) {
+        data[set].push({ name: cleanName, number });
+      }
+    }
+  });
+
+  await saveToFirestore(data);
+  displayData(data);
+}
+
+// Save processed data to Firestore
+async function saveToFirestore(data) {
+  for (const set in data) {
+    const setDocRef = db.collection("pokemon_sets").doc(set);
+    await setDocRef.set({ pokemons: data[set] });
+  }
+}
+
+// Display data in dropdowns and tables
+function displayData(data) {
+  const container = document.getElementById("sets-container");
+  container.innerHTML = "";
+
+  for (const set in data) {
+    const dropdown = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = set;
+    dropdown.appendChild(summary);
+
+    const table = document.createElement("table");
+    table.innerHTML = `<tr><th>Name</th><th>Number</th></tr>`;
+
+    data[set].forEach((pokemon) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${pokemon.name}</td><td>${pokemon.number || ""}</td>`;
+      table.appendChild(row);
+    });
+
+    dropdown.appendChild(table);
+    container.appendChild(dropdown);
+  }
+}
+
+// File upload handler
+document.getElementById("file-input").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    processFile(file);
+  }
+});
